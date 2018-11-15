@@ -7,6 +7,7 @@ package k1
 
 import (
 	"net"
+	"time"
 
 	. "github.com/xjdrew/kone/internal"
 	"github.com/xjdrew/kone/tcpip"
@@ -17,13 +18,16 @@ var logger = GetLogger()
 type One struct {
 	// tun ip
 	ip net.IP
+	//tickerInterval 自动代理刷新的间隔时间
+	tickerInterval time.Duration
 
 	// tun virtual network
 	subnet *net.IPNet
 
-	rule     *Rule
-	dnsTable *DnsTable
-	proxies  *Proxies
+	rule          *Rule
+	dnsTable      *DnsTable
+	proxies       *Proxies
+	tickerProxies *TickerAutoProxy
 
 	dns      *Dns
 	tcpRelay *TCPRelay
@@ -62,6 +66,9 @@ func FromConfig(cfg *KoneConfig) (*One, error) {
 		ip:     ip.To4(),
 		subnet: subnet,
 	}
+
+	one.tickerInterval = general.TickerInterval
+	one.tickerProxies = &TickerAutoProxy{}
 
 	// new rule
 	one.rule = NewRule(cfg.Rule, cfg.Pattern)

@@ -9,12 +9,14 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"gopkg.in/gcfg.v1"
 )
 
 type GeneralConfig struct {
-	Network string // tun network
+	Network        string        // tun network
+	TickerInterval time.Duration //自动代理刷新时间
 }
 
 type NatConfig struct {
@@ -24,11 +26,11 @@ type NatConfig struct {
 }
 
 type DnsConfig struct {
-	DnsPort         uint16   `gcfg:"dns-port"`
-	DnsTtl          uint     `gcfg:"dns-ttl"`
-	DnsPacketSize   uint16   `gcfg:"dns-packet-size"`
-	DnsReadTimeout  uint     `gcfg:"dns-read-timeout"`
-	DnsWriteTimeout uint     `gcfg:"dns-write-timeout"`
+	DnsPort         uint16 `gcfg:"dns-port"`
+	DnsTtl          uint   `gcfg:"dns-ttl"`
+	DnsPacketSize   uint16 `gcfg:"dns-packet-size"`
+	DnsReadTimeout  uint   `gcfg:"dns-read-timeout"`
+	DnsWriteTimeout uint   `gcfg:"dns-write-timeout"`
 	Nameserver      []string // backend dns
 }
 
@@ -37,8 +39,11 @@ type RouteConfig struct {
 }
 
 type ProxyConfig struct {
-	Url     string
-	Default bool
+	Url             []string
+	Default         bool
+	Auto            string
+	Interval		int64
+	LastRefreshTime time.Time //如果是auto类型，则记录上次更新的时间
 }
 
 type PatternConfig struct {
@@ -213,6 +218,7 @@ func ParseConfig(filename string) (*KoneConfig, error) {
 
 	// set default value
 	cfg.General.Network = "10.192.0.1/16"
+	cfg.General.TickerInterval = time.Minute * 5
 
 	cfg.TCP.ListenPort = 82
 	cfg.TCP.NatPortStart = 10000

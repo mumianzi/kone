@@ -107,7 +107,7 @@ func (d *Dns) doIPv4Query(r *dns.Msg) (*dns.Msg, error) {
 	// if have already hijacked
 	record := one.dnsTable.Get(domain)
 	if record != nil {
-		return record.Answer(r), nil
+		//return record.Answer(r), nil
 	}
 
 	// match by domain
@@ -116,6 +116,13 @@ func (d *Dns) doIPv4Query(r *dns.Msg) (*dns.Msg, error) {
 	// if domain use proxy
 	if matched && proxy != "" {
 		if record := one.dnsTable.Set(domain, proxy); record != nil {
+
+			//自动切换代理--负载均衡
+			aConfig, ok := one.tickerProxies.Config[proxy]
+			if ok && aConfig.Auto == autoRandProxy {
+				one.proxies.RandAutoProxy(proxy, one.tickerProxies.Config)
+			}
+
 			go d.fillRealIP(record, r)
 			return record.Answer(r), nil
 		}
